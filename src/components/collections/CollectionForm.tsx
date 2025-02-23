@@ -1,9 +1,9 @@
 "use client";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import axios from "axios"; // Import Axios
+import axios from "axios";
 import { Separator } from "../ui/separator";
 import { Card, Button } from 'flowbite-react';
 import {
@@ -19,6 +19,22 @@ import { Textarea } from "../ui/textarea";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+type CollectionType = {
+    _id: string;
+    name: string;
+    description: string; // Add the description field here
+    icon: string;
+    color: string;
+    typestore: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+// Define the props for the component
+interface CollectionFormProps {
+    initialData?: CollectionType | null;
+}
+
 const formSchema = z.object({
     name: z.string().min(2).max(20),
     description: z.string().min(2).max(500).trim(),
@@ -26,16 +42,16 @@ const formSchema = z.object({
     typestore: z.string().min(1, "Please select a type"),
 });
 
-const CollectionForm: React.FC<any> = () => {
+const CollectionForm: React.FC<CollectionFormProps> = ({ initialData }) => {
     const [loading, setLoading] = useState(false);
-    const [images, setImages] = useState<File[]>([]); // Change to File type for FormData
+    const [images, setImages] = useState<File[]>([]);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
-            description: "",
-            icon: [],
-            typestore: "",
+            name: initialData?.name || "",
+            description: initialData?.description || "",
+            icon: initialData?.icon ? [initialData.icon] : [],
+            typestore: initialData?.typestore || "",
         },
     });
     const router = useRouter();
@@ -43,48 +59,51 @@ const CollectionForm: React.FC<any> = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const fileArray = Array.from(e.target.files);
-            setImages(fileArray); // Update images state
-            form.setValue("icon", fileArray.map(file => file.name)); // Set only file names if needed
+            setImages(fileArray);
+            form.setValue("icon", fileArray.map((file) => file.name));
         }
     };
 
     const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-        setLoading(true); // Set loading state
+        setLoading(true);
         const formData = new FormData();
 
         formData.append("name", data.name);
         formData.append("description", data.description);
         formData.append("typestore", data.typestore);
         images.forEach((icon) => {
-            formData.append("icon", icon); // Append actual file
+            formData.append("icon", icon);
         });
 
         try {
-            const token = localStorage.getItem('authtoken'); // Retrieve token from local storage
-            const response = await axios.post(process.env.NEXT_PUBLIC_IPHOST + '/StoreAPI/categories/CreateCategory', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${token}`, // Add token in the Authorization header
-
-
-                },
-            });
-            console.log(response)
+            const token = localStorage.getItem("authtoken");
+            const response = await axios.post(
+                process.env.NEXT_PUBLIC_IPHOST + "/StoreAPI/categories/CreateCategory",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            console.log(response);
             toast.success("Category created successfully!");
-            console.log('Category created successfully');
             router.back();
         } catch (error) {
             toast.error("Failed to create category.");
-            console.error('Error creating category:', error);
+            console.error("Error creating category:", error);
         } finally {
-            setLoading(false); // Reset loading state
+            setLoading(false);
         }
     };
 
     return (
         <Card className="bg-white m-8 rounded-lg shadow-lg max-w-lg w-full max-w-3xl bg-transparent relative">
-            <div className="p-6 justify-center items-center ">
-                <h1 className="text-3xl font-bold text-center text-[#857B74] drop-shadow-lg">Create Collection</h1>
+            <div className="p-6 justify-center items-center">
+                <h1 className="text-3xl font-bold text-center text-[#857B74] drop-shadow-lg">
+                    Create Collection
+                </h1>
 
                 <Separator className="bg-grey-1" />
                 <Form {...form}>
@@ -96,10 +115,7 @@ const CollectionForm: React.FC<any> = () => {
                                 <FormItem>
                                     <FormLabel>Name</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="Collection Name"
-                                            {...field}
-                                        />
+                                        <Input placeholder="Collection Name" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -125,10 +141,7 @@ const CollectionForm: React.FC<any> = () => {
                                 <FormItem>
                                     <FormLabel>Store Type</FormLabel>
                                     <FormControl>
-                                        <select
-                                            {...field}
-                                            className="border p-2 w-full rounded"
-                                        >
+                                        <select {...field} className="border p-2 w-full rounded">
                                             <option value="">Select Type</option>
                                             <option value="accessoire">Accessoires store</option>
                                             <option value="vetement">Vetements store</option>
@@ -145,11 +158,7 @@ const CollectionForm: React.FC<any> = () => {
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Description"
-                                            {...field}
-                                            rows={5}
-                                        />
+                                        <Textarea placeholder="Description" {...field} rows={5} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -166,7 +175,7 @@ const CollectionForm: React.FC<any> = () => {
                     </form>
                 </Form>
             </div>
-        </Card >
+        </Card>
     );
 };
 

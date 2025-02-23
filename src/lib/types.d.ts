@@ -1,12 +1,14 @@
 type CollectionType = {
     _id: string;
     name: string;
+    description: string; // ✅ Added this field
     icon: string;
     color: string;
     typestore: string;
     createdAt: string;
     updatedAt: string;
 };
+
 
 type ProductDetailType = {
     color: string;
@@ -23,19 +25,19 @@ type ProductType = {
     richDescription: string;
     images: string[];
     brand: string;
-    Price: string;
+    Price: string;         // Consider renaming to "price" for consistency
     category: string;
-    CountINStock: number;
+    CountINStock: number;  // Consider renaming to "countInStock"
     rating: number;
     createdAt: string;
     updatedAt: string;
-    IsFeatured: boolean;
+    IsFeatured: boolean;   // Consider renaming to "isFeatured"
     productdetail: ProductDetailType[];
 };
 
 type UserType = {
     id: string;
-    username: String;
+    username: string;      // Changed from "String" to "string"
     wishlist: string[];
     createdAt: string;
     updatedAt: string;
@@ -44,24 +46,23 @@ type UserType = {
 type OrderItem = {
     product: ProductType[];
     quantity: number;
-    color:string;
-    size:string;
+    color: string;
+    size: string;
     _id: string;
 };
 
 type OrderType = {
-
     _id: string;
-    orderitems: [OrderItem];
-    adress: String;
-    city: String;
-    postalcode: String;
-    phonenumber: String;
-    status: String;
-    totalprice: Number;
-    quantityOrder: Number;
-    user: User;
-    dateordered: String!
-    createdAt: String;
-    updatedAt: String;
+    orderitems: OrderItem[];  // Changed from tuple [OrderItem] to an array of OrderItem
+    adress: string;           // Changed from "String" to "string"
+    city: string;             // Changed from "String" to "string"
+    postalcode: string;       // Changed from "String" to "string"
+    phonenumber: string;      // Changed from "String" to "string"
+    status: string;           // Changed from "String" to "string"
+    totalprice: number;       // Changed from "Number" to "number"
+    quantityOrder: number;    // Changed from "Number" to "number"
+    user: UserType;           // Changed from User to UserType
+    dateordered: string;      // Removed the exclamation mark and changed from "String" to "string"
+    createdAt: string;        // Changed from "String" to "string"
+    updatedAt: string;        // Changed from "String" to "string"
 };

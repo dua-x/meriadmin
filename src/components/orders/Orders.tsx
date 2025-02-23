@@ -1,19 +1,54 @@
 'use client';
-import { Plus } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/custom ui/DataTable";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { Button } from "@/components/ui/button";
-import dotenv from "dotenv";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+interface DataWithId {
+    _id: string;
+    [key: string]: unknown;
+}
+
+
+
+interface Order extends DataWithId {
+    idorder: string;
+    adress: string;
+    wilaya: string;
+    commune: string;
+    phonenumber: string;
+    status: string;
+    totalprice: string;
+    quantityOrder: number;
+    user: {
+        _id: string;
+        username: string;
+    };
+    dateordered: string;
+    createdAt: string;
+    updatedAt: string;
+    orderitems: OrderItem[];
+    [key: string]: unknown;
+}
+
+interface OrderItem {
+    _id: string;
+    quantity: number;
+    product: {
+        name: string;
+        images: string[];
+        Price: number;
+    };
+    size: string;
+    color: string;
+    priceproduct: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export default function Orders() {
     const [orders, setOrders] = useState<Order[]>([]);
-    const [expandedOrders, setExpandedOrders] = useState<{ [key: string]: boolean }>({});
-    const router = useRouter();
-    const [orderitems, setorderitems] = useState();
+
 
     useEffect(() => {
         const handleOrder = async () => {
@@ -70,9 +105,14 @@ export default function Orders() {
                     }
                 );
 
-                // Check if data exists and update orders state
                 if (response.data?.data?.userorderGET?.order) {
-                    setOrders(response.data.data.userorderGET.order);
+                    // Map both _id and id for compatibility
+                    const mappedOrders = response.data.data.userorderGET.order.map((order: OrderType) => ({
+                        ...order,
+                        id: order._id,
+                        _id: order._id,
+                    }));
+                    setOrders(mappedOrders);
                 } else {
                     console.error("No orders found");
                 }
@@ -86,65 +126,12 @@ export default function Orders() {
 
 
 
-    interface orderitems {
-        product: string;
-        quantity: number;
 
-    }
-
-    interface Order {
-        _id: string;
-        idorder: string;
-        orderdBy: string;
-        adress: string;
-        Totalprice: string;
-        orderdAt: string;
-        productNB: number;
-        state: string;
-        items: orderitems[]; // Assuming each order contains an array of products
-    }
-
-    const toggleOrder = (orderId: string) => {
-        setExpandedOrders(prev => ({
-            ...prev,
-            [orderId]: !prev[orderId],
-        }));
-    };
-
-    const renderProductDetails = (order: Order): React.ReactNode | null => {
-        if (!expandedOrders[order._id]) return null; // If the row is not expanded, return null
-
-        return (
-            <div key={order._id} className="pl-5 py-5">
-                <h4 className="font-bold">Products:</h4>
-                <ul>
-                    {order.items.length > 0 ? (
-                        order.items.map((item, index) => (
-                            <li key={index}>
-                                <span>Product: {item.product}, Quantity: {item.quantity}</span>
-                            </li>
-                        ))
-                    ) : (
-                        <li>No products found.</li>
-                    )}
-                </ul>
-            </div>
-        );
-    };
-
-    // Define your columns
     const columns: ColumnDef<Order>[] = [
         {
-            accessorKey: "_id",
+            accessorKey: "id",
             header: "ID",
             cell: (info) => info.getValue() || "N/A",
-
-
-            // cell: (info) => (
-            //     <div onClick={() => toggleOrder(info.row.original._id)} style={{ cursor: "pointer" }}>
-            //         {info.getValue() || "N/A"}
-            //     </div>
-            // ),
         },
         {
             accessorKey: "user.username",
@@ -154,9 +141,7 @@ export default function Orders() {
         {
             accessorKey: "quantityOrder",
             header: "Number",
-            cell: (info) => info.getValue() as number,
-
-
+            cell: (info) => info.getValue() || "N/A",
         },
         {
             accessorKey: "totalprice",
@@ -175,8 +160,8 @@ export default function Orders() {
         },
     ];
 
-    const handleDeleteProduct = async (id: string) => {
-        
+    const handleDeleteProduct = async () => {
+
     };
 
     return (
@@ -184,14 +169,14 @@ export default function Orders() {
             <div className="flex items-center justify-between">
                 <p className="text-heading1-bold">Orders List</p>
             </div>
-
-            <DataTable
-                columns={columns}
+            <DataTable<Order, unknown>
+                columns={columns as ColumnDef<Order, unknown>[]}
                 data={orders}
                 searchKey="status"
-                editLinkBase="/products/edit/"
-                onDelete={handleDeleteProduct}
+                editLinkBase="/collections/edit"
+                onDeleteAction={handleDeleteProduct}
             />
+
 
         </div>
     );

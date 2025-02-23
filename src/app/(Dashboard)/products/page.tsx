@@ -1,5 +1,4 @@
-"use client"
-import Layout from "@/app/layout";
+"use client";
 import Products from "@/components/products/Products";
 
 

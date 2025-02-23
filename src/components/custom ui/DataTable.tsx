@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 interface DataWithId {
     _id: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface DataTableProps<TData extends DataWithId, TValue> {
@@ -33,16 +33,18 @@ interface DataTableProps<TData extends DataWithId, TValue> {
     data: TData[];
     searchKey: string;
     editLinkBase: string;
-    onDelete: (id: string) => void;
+    onDeleteAction: (id: string) => void;
 }
+
 
 export function DataTable<TData extends DataWithId, TValue>({
     columns,
     data,
     searchKey,
     editLinkBase,
-    onDelete,
+    onDeleteAction, // Correct
 }: DataTableProps<TData, TValue>) {
+
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedRow, setSelectedRow] = useState<TData | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -56,7 +58,7 @@ export function DataTable<TData extends DataWithId, TValue>({
 
     const confirmDelete = () => {
         if (deletePassword === "younes@") {
-            onDelete(selectedProduct?._id as string);
+            onDeleteAction(selectedProduct?._id as string);
             setSelectedProduct(null);
             setIsDeleteDialogOpen(false);
             setDeletePassword("");
@@ -64,6 +66,8 @@ export function DataTable<TData extends DataWithId, TValue>({
             alert("Incorrect password. Please try again.");
         }
     };
+
+
     const table = useReactTable({
         data,
         columns,
@@ -74,16 +78,8 @@ export function DataTable<TData extends DataWithId, TValue>({
         state: { columnFilters },
     });
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this item?")) {
-            onDelete(id);
-            setSelectedRow(null);
-        }
-    };
-
     return (
         <div className="py-5 px-4 md:px-6">
-
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -91,7 +87,7 @@ export function DataTable<TData extends DataWithId, TValue>({
                     </DialogHeader>
                     <div className="p-4">
                         <h1 className="text-lg font-semibold">
-                            Do you really want to delete "{selectedProduct?.title}"?
+                            Do you really want to delete ?
                         </h1>
                         <Input
                             type="password"
@@ -101,8 +97,12 @@ export function DataTable<TData extends DataWithId, TValue>({
                             className="mt-4"
                         />
                         <div className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                            <Button className="bg-red-600 text-white" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button className="bg-red-600 text-white" onClick={confirmDelete}>
+                                Delete
+                            </Button>
                         </div>
                     </div>
                 </DialogContent>
@@ -189,7 +189,9 @@ export function DataTable<TData extends DataWithId, TValue>({
                             {Object.entries(selectedRow).map(([key, value]) =>
                                 key !== "_id" && (
                                     <div key={key} className="flex flex-col py-2">
-                                        <span className="text-sm font-semibold capitalize break-words">{key.replace(/_/g, " ")}</span>
+                                        <span className="text-sm font-semibold capitalize break-words">
+                                            {key.replace(/_/g, " ")}
+                                        </span>
                                         <div className="text-sm text-gray-800 break-words">
                                             {typeof value === "object" && value !== null ? (
                                                 Array.isArray(value) ? value.join(", ") : JSON.stringify(value)
@@ -205,9 +207,10 @@ export function DataTable<TData extends DataWithId, TValue>({
                             <Link href={`${editLinkBase}/${selectedRow._id}`}>
                                 <Button className="w-full sm:w-auto bg-blue-600 text-white">Edit</Button>
                             </Link>
-                            <Button className="w-full sm:w-auto bg-red-600 text-white" onClick={confirmDelete}>
+                            <Button variant="destructive" onClick={confirmDelete}>
                                 Delete
                             </Button>
+
                             <Button className="w-full sm:w-auto bg-gray-100 text-gray-700" onClick={() => setSelectedRow(null)}>
                                 <X className="h-5 w-5 text-gray-600" />
                             </Button>

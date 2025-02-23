@@ -2,10 +2,10 @@
 import axios from 'axios';
 import { Card, Button } from 'flowbite-react';
 import { useEffect, useState } from 'react';
-
-export default function ProductForm() {
+import Image from 'next/image';
+export default function ProductForm({ initialData }) {
     const [step, setStep] = useState(1);
-    const [name, setName] = useState('');
+    const [name, setName] = useState(initialData?.name || '');
     const [description, setDescription] = useState('');
     const [richDescription, setRichDescription] = useState('');
     const [Price, setPrice] = useState('');
@@ -19,6 +19,20 @@ export default function ProductForm() {
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
 
+    useEffect(() => {
+        if (initialData) {
+            setName(initialData.name || '');
+            setDescription(initialData.description || '');
+            setRichDescription(initialData.richDescription || '');
+            setPrice(initialData.Price || '');
+            setCategory(initialData.category || '');
+            setCountINStock(initialData.CountINStock || '');
+            setBrand(initialData.brand || '');
+            setIsFeatured(initialData.IsFeatured || false);
+            setImages(initialData.images || []);
+            setProductDetail(initialData.productdetail || [{ color: '', sizes: [{ size: '', stock: '' }] }]);
+        }
+    }, [initialData]);
     useEffect(() => {
         axios
             .post(`${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/categories/categoryGET`, {
@@ -111,7 +125,6 @@ export default function ProductForm() {
         setError(null);
         setLoading(true);
 
-        // Prepare the productDetail as an array of objects
         const formattedProductDetail = productdetail.map((detail) => ({
             color: detail.color,
             sizes: detail.sizes.map((size) => ({
@@ -120,13 +133,11 @@ export default function ProductForm() {
             })),
         }));
 
-        // Prepare the FormData object with the selected images
         const formData = new FormData();
         images.forEach((image) => {
-            formData.append("images", image); // Append actual file
+            formData.append("images", image);
         });
 
-        // Add the rest of the form data
         formData.append('name', name);
         formData.append('description', description);
         formData.append('richDescription', richDescription);
@@ -135,40 +146,52 @@ export default function ProductForm() {
         formData.append('CountINStock', CountINStock);
         formData.append('brand', brand);
         formData.append('IsFeatured', IsFeatured);
-
-        // Add productDetail as a JSON string
         formData.append('productdetail', JSON.stringify(formattedProductDetail));
 
-        console.log("Formatted Product Detail:", formattedProductDetail);
-
         try {
-            const token = localStorage.getItem('authtoken'); // Retrieve token from local storage
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/products/CreateProduct`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',  // Use 'multipart/form-data' for FormData
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            console.log('Response:', response.data);
+            const token = localStorage.getItem('authtoken');
+            if (initialData) {
+                // EDIT PRODUCT
+                await axios.put(
+                    `${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/products/${initialData._id}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+            } else {
+                // CREATE PRODUCT
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/products/CreateProduct`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+            }
             location.href = '/products';
-            // Handle response as needed
         } catch (err) {
             console.error('Error:', err.message);
-            setError('Failed to create product.');
+            setError('Failed to save product.');
         } finally {
             setLoading(false);
         }
     };
 
-
     return (
-    
+
         <Card className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full max-w-3xl bg-transparent relative">
+            <h1 className="text-2xl font-bold mb-4">
+                {initialData ? 'Edit Product' : 'Create New Product'}
+            </h1>
+            {error && <p className="text-red-500">{error}</p>}
+
             {step === 1 && (
                 <div>
                     <h1 className="text-2xl font-bold mb-4">Step 1: Basic Product Info</h1>
@@ -192,7 +215,7 @@ export default function ProductForm() {
                         <div className="flex flex-wrap gap-2 mt-2">
                             {images.map((img, index) => (
                                 <div key={index} className="relative">
-                                    <img
+                                    <Image
                                         src={URL.createObjectURL(img)}
                                         alt="Preview"
                                         className="w-20 h-20 object-cover rounded border"
@@ -309,3 +332,8 @@ export default function ProductForm() {
         </Card>
     );
 }
+
+
+
+
+

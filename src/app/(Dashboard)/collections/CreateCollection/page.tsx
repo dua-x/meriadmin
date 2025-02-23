@@ -1,6 +1,6 @@
 
 import CollectionForm from "@/components/collections/CollectionForm"
-import Layout from "@/app/layout";
+import Layout from "@/app/(Dashboard)/layout";
 
 
 export default function CreateCollection() {

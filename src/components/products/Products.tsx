@@ -1,25 +1,25 @@
-import Link from "next/link";
+"use client";
+
 import { Plus } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/custom ui/DataTable";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import dotenv from "dotenv"
 
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-
+interface DataWithId {
+    _id: string;
+    [key: string]: unknown;
+}
 export default function Products() {
-
     const [products, setProducts] = useState<Article[]>([]);
-    const router = useRouter(); // Define the router
-    const [id, getid] = useState([]);
-
+    const router = useRouter();
 
     useEffect(() => {
-        axios.post(process.env.NEXT_PUBLIC_IPHOST + '/StoreAPI/products/productGET',
-            {
+        axios
+            .post(process.env.NEXT_PUBLIC_IPHOST + "/StoreAPI/products/productGET", {
                 query: `
                     query {
                         productGET {
@@ -28,26 +28,25 @@ export default function Products() {
                             description
                             images
                             Price
-                            category{
-                            name}
+                            category {
+                                name
+                            }
+                            createdAt
+                            updatedAt
                         }
                     }
-                `
-            }
-        )
-            .then(response => {
-                setProducts(response.data.data.productGET);  // Store products data in state
-                getid(response.data.data.productGET._id)
+                `,
             })
-            .catch(error => {
-                console.error('Error fetching products:', error);
+            .then((response) => {
+                setProducts(response.data.data.productGET);
+            })
+            .catch((error) => {
+                console.error("Error fetching products:", error);
             });
-
     }, []);
 
-    // Define the data type (replace this with the actual type of your data)
-    interface Article {
-        _id: string;
+    // Define the data type
+    interface Article extends DataWithId {
         name: string;
         description: string;
         price: string;
@@ -56,7 +55,7 @@ export default function Products() {
     }
 
     // Define your columns
-    const columns: ColumnDef<Article>[] = [
+    const columns: ColumnDef<DataWithId, unknown>[] = [
         {
             accessorKey: "name",
             header: "Name",
@@ -76,7 +75,7 @@ export default function Products() {
             accessorKey: "createdAt",
             header: "Created At",
             cell: (info) => {
-                const value = info.getValue() as string; // Cast to string
+                const value = info.getValue() as string;
                 const date = new Date(value);
                 return isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
             },
@@ -85,49 +84,55 @@ export default function Products() {
             accessorKey: "updatedAt",
             header: "Updated At",
             cell: (info) => {
-                const value = info.getValue() as string; // Cast to string
+                const value = info.getValue() as string;
                 const date = new Date(value);
                 return isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
             },
         },
-
     ];
+
 
     const handleDeleteProduct = async (id: string) => {
         try {
-            const token = localStorage.getItem('authtoken'); // Retrieve token from local storage
+            const token = localStorage.getItem("authtoken");
 
-            await axios.post(`${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/products/productPOST`, {
-                query: `
+            await axios.post(
+                `${process.env.NEXT_PUBLIC_IPHOST}/StoreAPI/products/productPOST`,
+                {
+                    query: `
                         mutation {
-                        productDELETE(input: {
-                            productId:"${id}"
-                            password: "younes@" }) {
-                            
-                            
-                            message
+                            productDELETE(input: {
+                                productId: "${id}"
+                                password: "younes@"
+                            }) {
+                                message
+                            }
                         }
-                        }
-                `
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',  // Use 'multipart/form-data' for FormData
-                    Authorization: `Bearer ${token}`,
+                    `,
                 },
-            });
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
             alert("Product deleted successfully!");
+            // Optionally, refresh the products list
+            setProducts((prev) => prev.filter((product) => product._id !== id));
         } catch (error) {
             console.error("Error deleting product:", error);
             alert("Failed to delete the product. Please try again.");
         }
     };
 
-
     return (
         <div className="px-8 py-10">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-[#857B74] drop-shadow-lg">Products</h1>
+                <h1 className="text-3xl font-bold text-[#857B74] drop-shadow-lg">
+                    Products
+                </h1>
                 <Button
                     className="btn-primary"
                     onClick={() => router.push("/products/newproduct")}
@@ -136,15 +141,15 @@ export default function Products() {
                     Create new product
                 </Button>
             </div>
-
-            {/* Pass the actual products data to DataTable */}
-            <DataTable
-                columns={columns}
+            <DataTable<DataWithId, unknown>
+                columns={columns as ColumnDef<DataWithId, unknown>[]}
                 data={products}
                 searchKey="name"
-                editLinkBase="/products/edit/"
-                onDelete={handleDeleteProduct}
+                editLinkBase="/collections/edit"
+                onDeleteAction={handleDeleteProduct}
             />
+
+
 
         </div>
     );
